@@ -88,263 +88,170 @@ courtlistener-mcp/
 ### 1. Clone and Setup
 
 ```bash
-git clone <your-repo>
-cd courtlistener-mcp
-pip install -r requirements.txt
+# Install MCP framework
+pip install mcp
+
+# Install legal database clients
+pip install courtlistener-api
+pip install brave-search-api
 ```
 
-### 2. Get CourtListener API Token
+### 2. API Configuration
 
-1. Visit [CourtListener Token Page](https://www.courtlistener.com/profile/tokens/)
-2. Sign up/login and create a new API token
-3. Copy your token
+**CourtListener Setup:**
+```bash
+# Register for CourtListener API access at: https://www.courtlistener.com/api/
+export COURTLISTENER_API_KEY="your_api_key_here"
+```
 
-### 3. Configure Environment
+**Brave Search Setup:**
+```bash
+# Register for Brave Search API at: https://api.search.brave.com/
+export BRAVE_SEARCH_API_KEY="your_api_key_here"
+```
+
+### 3. Start MCP Servers
 
 ```bash
-cp .env.template .env
-# Edit .env and add your API token
+# Start CourtListener MCP Server
+python mcp_servers/courtlistener_server.py --port 8000
+
+# Start Brave Search MCP Server  
+python mcp_servers/brave_server.py --port 8001
 ```
 
-### 4. Install in Claude Desktop
+### 4. Run Training with MCP
 
 ```bash
-# Automatic installation
-mcp install courtlistener_server.py --name "CourtListener Legal Research" -v COURTLISTENER_API_TOKEN=your_token
-
-# Or test with MCP inspector
-mcp dev courtlistener_server.py
+python train_with_mcp.py \
+    --config config/mcp_training.yaml \
+    --mcp-servers courtlistener,brave \
+    --output models/mcp_legal_agent_v1/
 ```
-
-## Usage Examples
-
-### **Opinion & Case Analysis**
-
-Ask Claude:
-- *"Explain what happened in opinion 11063335"*
-- *"Find recent Supreme Court decisions about privacy rights"*
-- *"Get dissenting opinions from Justice Thomas in 2024"*
-- *"Analyze the holding in Citizens United v. FEC"*
-- *"Show me the case docket 65663213 timeline"*
-
-### **Judge & People Research**
-
-Ask Claude:
-- *"Find information about Judge Smith from the 9th Circuit"*
-- *"Show me Justice Ginsburg's career timeline and positions"*
-- *"What are Elena Kagan's ABA ratings and educational background?"*
-- *"Find judges appointed by Obama with Harvard law degrees"*
-- *"Analyze retention events for state supreme court justices"*
-
-### **Citation & Precedent Analysis**
-
-Ask Claude:
-- *"Verify this citation: 576 U.S. 644"*
-- *"What cases does Obergefell v. Hodges cite?"*
-- *"Find all cases that cite Brown v. Board of Education"*
-- *"Check if this citation is valid: 999 U.S. 1"*
-- *"Analyze the citation network for Roe v. Wade"*
-
-## Key API Tools
-
-### **`get_opinion`** - Comprehensive Opinion Analysis
-
-```python
-get_opinion(
-    opinion_id=11063335,           # Specific opinion ID
-    court="scotus",                # Court filter  
-    opinion_type="040dissent",     # Dissenting opinions
-    include_full_text=True,        # Include complete text
-    analyze_content=True           # Extract holdings & facts
-)
-```
-
-### **`get_judge`** - Complete Judge Profiles
-
-```python
-get_judge(
-    name_last="Ginsburg",          # Judge name search
-    court_name="Supreme Court",    # Court filter
-    include_positions=True,        # Career positions
-    include_educations=True,       # Educational history
-    include_aba_ratings=True       # ABA ratings
-)
-```
-
-### **`get_positions`** - Career & Appointment Analysis
-
-```python
-get_positions(
-    person_id=8521,               # Specific person
-    position_type="pres",         # President positions
-    include_court_details=True,   # Court information
-    include_retention_events=True # Retention history
-)
-```
-
-### **`verify_citations`** - Citation Verification
-
-```python
-verify_citations(
-    text="See Obergefell v. Hodges (576 U.S. 644)",  # Parse from text
-    include_cluster_details=True,  # Full case details
-    sort_by="status"              # Sort results
-)
-```
-
-## Architecture
-
-### **Separation of Concerns**
-
-- **`core/`** - Application lifecycle and HTTP client management
-- **`tools/`** - Complete MCP tool implementations for legal analysis  
-- **`utils/`** - Shared utilities for code translation and formatting
-- **Main server** - FastMCP setup and tool registration
-
-### **Legal Code Translation**
-
-Automatically converts CourtListener's codes to human-readable descriptions:
-
-- **Nature of Suit**: `440` → `"Civil rights other"`
-- **Position Types**: `"pres"` → `"President"`, `"jud"` → `"Judge"`
-- **Selection Methods**: `"a_pres"` → `"Appointed by President"`
-- **ABA Ratings**: `"ewq"` → `"Exceptionally Well Qualified"`
-- **Political Parties**: `"d"` → `"Democratic"`, `"r"` → `"Republican"`
-- **Opinion Types**: `"040dissent"` → `"Dissent"`
-
-### **Content Analysis**
-
-Advanced opinion text analysis extracts:
-
-- **Key Holdings** - "We hold...", "We conclude..."
-- **Procedural Disposition** - "AFFIRMED", "REVERSED", "REMANDED"  
-- **Factual Background** - Case facts and procedural history
-- **Citation Analysis** - Referenced cases and precedents
-
-## Configuration
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `COURTLISTENER_API_TOKEN` | **Required** - Your API token | None |
-| `COURTLISTENER_BASE_URL` | API base URL | Production URL |
-| `MCP_TRANSPORT` | Transport method | `stdio` |
-| `MCP_HOST` | Server host (non-stdio) | `0.0.0.0` |
-| `MCP_PORT` | Server port (non-stdio) | `8000` |
-| `MCP_LOG_FILE` | Enable file logging | `false` |
-
-### Transport Options
-
-- **`stdio`** - Default for Claude Desktop integration
-- **`sse`** - Server-Sent Events for web applications
-- **`streamable-http`** - Recommended for production deployments
-
-## Complete Tool Reference
-
-### **Court Opinions & Cases**
-| Tool | Purpose | Key Features |
-|------|---------|--------------|
-| `get_opinion` | Individual court decisions | Full text analysis, content extraction |
-| `get_cluster` | Grouped case opinions | Multiple decisions per case |
-| `get_docket` | Case information & timeline | Procedural history, parties |
-| `search_legal_cases` | Legal content search | Advanced filtering, relevance scoring |
-
-### **Judge & People Data**
-| Tool | Purpose | Key Features |
-|------|---------|--------------|
-| `get_judge` | Judge biographical data | Demographics, career overview |
-| `get_positions` | Position & appointment history | Career timeline, confirmation votes |
-| `get_political_affiliations` | Political party history | Timeline, source tracking |
-| `get_aba_ratings` | ABA rating analysis | Rating context, evaluation timeline |
-| `get_educations` | Educational background | Degrees, schools, years |
-| `get_retention_events` | Retention votes & reappointments | Voting data, retention success |
-| `get_sources` | Data source tracking | Provenance, access dates |
-
-### **Citation & Analysis**
-| Tool | Purpose | Key Features |
-|------|---------|--------------|
-| `verify_citations` | Citation verification | Powered by Eyecite, text parsing |
-| `find_authorities_cited` | Backward citation analysis | What a decision cites |
-| `find_citing_opinions` | Forward citation analysis | What cites a decision |
-| `analyze_citation_network` | Complete precedent mapping | Full citation networks |
-
-### **Infrastructure**
-| Tool | Purpose | Key Features |
-|------|---------|--------------|
-| `get_court` | Court information | Hierarchy, jurisdiction, activity |
-
-## Development
-
-### Local Testing
-
-```bash
-# Test with MCP inspector
-mcp dev courtlistener_server.py
-
-# Test specific functionality
-python -c "
-from tools.position_tools import register_position_tools
-print('Position tools loaded successfully')
-"
-```
-
-### Adding New Tools
-
-1. Create tool function in appropriate module (`tools/`)
-2. Register with MCP server in the module's register function
-3. Add any new code mappings to `utils/mappings.py`
-4. Update formatters in `utils/formatters.py` if needed
-5. Update this README with tool documentation
-
-### Code Standards
-
-- Type hints for all functions
-- Comprehensive error handling
-- Detailed logging for debugging
-- Human-readable code translations
-- Consistent output formatting
-
-## Legal Data Sources
-
-This server accesses data from:
-
-- **CourtListener** - Millions of court opinions and case law
-- **RECAP Archive** - Federal court documents from PACER
-- **Harvard Caselaw Access Project** - Historical legal decisions
-- **Federal Judicial Center** - Integrated Database (IDB)
-- **Eyecite** - Citation parsing engine (18+ million citations)
-- **Free Law Project** - Curated legal datasets
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Follow existing code organization patterns
-4. Add appropriate tests and documentation
-5. Submit a pull request
-
-## License
-
-MIT License - see LICENSE file for details.
-
-## Support
-
-- **CourtListener API**: [Documentation](https://www.courtlistener.com/help/api/rest/)
-- **MCP Protocol**: [Specification](https://spec.modelcontextprotocol.io)
-- **Issues**: Create GitHub issues for bugs or feature requests
 
 ---
 
-*Built with ❤️ for the legal research community*  
-*Powered by [Free Law Project](https://free.law) and [CourtListener](https://www.courtlistener.com)*
+## Learning Patterns During Training
 
-## Quick Reference
+### Tool Usage Evolution
 
-**14 Complete Tools Available:**
-✅ Court Opinions & Cases (4 tools)  
-✅ Judge & People Data (7 tools)  
-✅ Citation & Analysis (4 tools)  
-✅ Infrastructure (1 tool)
+**Early Training (Episodes 1-100):**
+- Random tool selection
+- Poor query formulation
+- No strategic sequencing
 
-**Total: 16 specialized legal research tools ready for Claude Desktop integration**
+**Mid Training (Episodes 500-1000):**
+- Begins preferring CourtListener for legal precedents
+- Learns basic jurisdiction targeting
+- Develops simple search refinement
+
+**Advanced Training (Episodes 2000+):**
+- Strategic tool sequencing (CourtListener → Brave for context)
+- Jurisdiction-aware tool selection
+- Complex query optimization
+
+**Expert Level (Episodes 5000+):**
+- Sophisticated search strategies
+- Tool coordination patterns
+- Professional-grade research workflows
+
+### Optimal Search Strategy Patterns
+
+**Precedent Research:**
+1. Search CourtListener for case topic
+2. Search CourtListener for jurisdiction-specific cases
+3. Search Brave for recent developments
+
+**Statutory Analysis:**
+1. Search Brave for statute text
+2. Search CourtListener for statute interpretation
+3. Search Brave for recent applications
+
+**General Consultation:**
+1. Search Brave for topic overview
+2. Search CourtListener for relevant cases
+3. Search Brave for practical guidance
+
+---
+
+## Monitoring and Troubleshooting
+
+### Health Checks
+
+```bash
+# Test MCP server connectivity
+curl http://localhost:8000/health  # CourtListener
+curl http://localhost:8001/health  # Brave
+```
+
+### Common Issues
+
+**Connection Problems:**
+- Check API keys are properly set
+- Verify servers are running on correct ports
+- Test network connectivity
+
+**Rate Limiting:**
+- Monitor API usage quotas
+- Adjust request frequency if needed
+- Scale servers for higher throughput
+
+**Performance Issues:**
+- Check server response times
+- Monitor memory usage
+- Verify database connectivity
+
+### Scaling Considerations
+
+**High-Traffic Scenarios:**
+- Run multiple MCP server instances
+- Use load balancers for distribution
+- Implement connection pooling
+- Cache frequent queries
+
+---
+
+## Key Benefits of Our MCP Approach
+
+### 1. Strategic Learning During Training
+- Agents develop optimal tool sequencing patterns naturally
+- 9-call constraint forces efficient resource utilization
+- Legal-specific search strategies emerge through reinforcement learning
+
+### 2. Professional Legal Research Replication  
+- Dual database approach mirrors real legal practice (specialized + general search)
+- Jurisdiction-aware tool selection develops automatically
+- Citation network navigation skills learned during training
+
+### 3. Research Innovation
+- First implementation of MCP integration during RL training episodes
+- Reproducible methodology using standardized MCP protocols
+- Novel training approach for legal AI development
+
+### 4. Practical Advantages
+- Cost-effective training through search constraints
+- Quality-focused rewards for search relevance
+- Scalable architecture supporting concurrent training
+
+---
+
+## Future MCP Enhancements
+
+### Additional Legal Database Integration
+- Westlaw and Lexis MCP servers
+- Patent database access
+- Regulatory database integration
+
+### Advanced Search Capabilities  
+- Multi-modal document analysis
+- Real-time legal news integration
+- Specialized practice area databases
+
+### Performance Optimizations
+- Intelligent query caching
+- Predictive search suggestions
+- Dynamic rate limit management
+
+---
+
+*This MCP integration enables our legal AI agents to develop professional-grade research skills by learning with tools during training, representing a fundamental advancement in legal AI training methodology.*
