@@ -1,0 +1,20 @@
+# CourtListener MCP Server Configuration
+# Copy this file to .env and fill in your actual values
+
+# Required: Your CourtListener API token
+# Get it from: https://www.courtlistener.com/profile/tokens/
+COURTLISTENER_API_TOKEN=your_token_here
+
+# Optional: CourtListener API base URL (defaults to production)
+# COURTLISTENER_BASE_URL=https://www.courtlistener.com/api/rest/v4
+
+# Optional: Transport method for MCP server
+# Options: stdio (default for Claude Desktop), sse, streamable-http
+MCP_TRANSPORT=stdio
+
+# Optional: Server host and port (for sse/streamable-http transports)
+# MCP_HOST=0.0.0.0
+# MCP_PORT=8000
+
+# Optional: Enable logging to file
+# MCP_LOG_FILE=true

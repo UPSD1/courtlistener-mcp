@@ -1,0 +1,266 @@
+# CourtListener MCP Server .gitignore
+# Python-based Model Context Protocol server for legal database access
+
+# Environment and Configuration Files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+*.env
+
+# API Keys and Secrets
+api_keys.txt
+secrets.txt
+tokens.txt
+*_token.txt
+*_secret.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.conda/
+.virtualenv
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit Test Coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Test Results and Output
+test_results/
+test_output/
+*_test_results.json
+*_test_output.txt
+
+# Log Files
+*.log
+logs/
+courtlistener_mcp.log
+mcp_server.log
+debug.log
+error.log
+
+# MCP Protocol Files
+mcp_transport.log
+mcp_debug.json
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# PyCharm
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.tmp
+*.temp
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# Temporary Files
+temp/
+tmp/
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# Database Files
+*.db
+*.sqlite
+*.sqlite3
+local.db
+test.db
+
+# Package manager files
+package-lock.json
+yarn.lock
+
+# Node.js (in case of any JS tooling)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# CourtListener Specific
+# Court data cache files
+court_cache/
+opinion_cache/
+docket_cache/
+*.court_data
+*.legal_cache
+
+# Downloaded legal documents
+downloads/
+documents/
+pdfs/
+
+# Analysis outputs
+analysis_results/
+citation_networks/
+legal_analysis/
+
+# Backup files
+backups/
+*.backup
+*.bck
+
+# OS generated files
+.fseventsd/
+.TemporaryItems
+.DocumentRevisions-V100
+.dbfseventsd

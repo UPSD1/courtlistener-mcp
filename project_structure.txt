@@ -1,0 +1,36 @@
+courtlistener-mcp/
+├── courtlistener_server.py          # Main MCP server
+├── server_factory.py                 # server factory
+├── requirements.txt                  # Dependencies
+├── .env.template                     # Environment template
+├── README.md                        # Project documentation
+├── core/
+│   ├── __init__.py
+│   └── lifespan.py                  # Lifecycle management
+├── tools/                           # All 16 tool implementations
+│   ├── __init__.py
+│   ├── opinion_tools.py
+│   ├── cluster_tools.py
+│   ├── docket_tools.py
+│   ├── court_tools.py
+│   ├── search_tools.py
+│   ├── people_tools.py
+│   ├── position_tools.py
+│   ├── political_affiliation_tools.py
+│   ├── aba_ratings_tools.py
+│   ├── retention_events_tools.py
+│   ├── sources_tools.py
+│   ├── education_tools.py
+│   ├── citation_tools.py
+│   └── opinions_cited_tools.py
+├── utils/
+│   ├── __init__.py
+│   ├── mappings.py                  # Code mappings
+│   └── formatters.py                # Output formatting
+└── tests/                           # Test directory (NEW)
+    ├── __init__.py                  # Make it a Python package
+    ├── courtlistener_evals.py       # Comprehensive evaluation suite
+    ├── mcp_test_runner.py           # Practical test runner
+    ├── test_config.sh                 # Automated test script
+    ├── pytest.ini                   # Pytest configuration
+    └── .env.test                     # Test environment template
