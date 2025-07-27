@@ -678,13 +678,19 @@ def get_race_display(code: str) -> str:
     return race_mapping.get(code, f"Unknown ({code})")
 
 
-def get_race_display_multiple(codes: str) -> str:
+def get_race_display_multiple(codes) -> str:
     """Convert multiple race codes to human-readable description."""
     if not codes:
         return None
     
-    # Handle single or multiple comma-separated race codes
-    race_codes = [code.strip() for code in codes.split(',')]
+    # Handle both list and string input
+    if isinstance(codes, list):
+        race_codes = [code.strip() for code in codes if code]
+    elif isinstance(codes, str):
+        race_codes = [code.strip() for code in codes.split(',') if code.strip()]
+    else:
+        return f"Unknown ({codes})"
+    
     race_displays = [get_race_display(code) for code in race_codes if code]
     
     if len(race_displays) == 1:

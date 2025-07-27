@@ -10,6 +10,7 @@ from typing import Optional, List
 from urllib.parse import quote_plus
 
 import httpx
+from datetime import datetime, timedelta
 from mcp.server.fastmcp import FastMCP
 
 from utils.mappings import (
@@ -139,7 +140,6 @@ Highlighting: {'Enabled' if enable_highlighting else 'Disabled'}
             logger.error(f"Error in legal search: {e}", exc_info=True)
             return f"Search error: {str(e)}\n\nDetails: {type(e).__name__}"
 
-    
     @mcp.tool()
     async def advanced_legal_search(
         query: str,
@@ -171,43 +171,118 @@ Highlighting: {'Enabled' if enable_highlighting else 'Disabled'}
         courtlistener_ctx = ctx.request_context.lifespan_context
         
         try:
-            # Build advanced query
-            enhanced_query = query
+            # Start with basic query parameters
+            params = {
+                'q': query,
+                'type': search_type,
+                'format': 'json',
+                'page_size': min(max(1, limit), 100)
+            }
             
-            # Add court filters to query if specified
+            # Handle multiple courts by making separate searches or using first court
+            court_filter = None
             if courts:
-                court_filter = " OR ".join([f"court:{court}" for court in courts])
-                enhanced_query = f"({enhanced_query}) AND ({court_filter})"
+                # Use the first court as primary filter
+                court_filter = courts[0]
+                params['court'] = court_filter
             
-            # Add date range to query if specified
+            # Handle date ranges with proper API parameters
             if date_range:
+                from datetime import datetime, timedelta
+                
                 if date_range == 'last_month':
-                    enhanced_query = f"({enhanced_query}) AND dateFiled:[now-1M TO now]"
+                    one_month_ago = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+                    params['filed_after'] = one_month_ago
                 elif date_range == 'last_year':
-                    enhanced_query = f"({enhanced_query}) AND dateFiled:[now-1y TO now]"
+                    one_year_ago = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
+                    params['filed_after'] = one_year_ago
                 elif '-' in date_range and len(date_range.split('-')) == 2:
-                    start_year, end_year = date_range.split('-')
-                    enhanced_query = f"({enhanced_query}) AND dateFiled:[{start_year}-01-01 TO {end_year}-12-31]"
+                    try:
+                        start_year, end_year = date_range.split('-')
+                        params['filed_after'] = f"{start_year}-01-01"
+                        params['filed_before'] = f"{end_year}-12-31"
+                    except ValueError:
+                        logger.warning(f"Invalid date range format: {date_range}")
             
-            # Apply advanced filters
+            # Apply advanced filters as separate parameters
             if advanced_filters:
                 for field, value in advanced_filters.items():
                     if value:
-                        enhanced_query = f"({enhanced_query}) AND {field}:{value}"
+                        # Map common filter names to API parameters
+                        filter_mapping = {
+                            'status': 'stat_Published' if value.lower() == 'published' else 'stat_Unpublished',
+                            'cite_count_min': 'citation_count__gte',
+                            'judge': 'judge',
+                            'case_name': 'case_name'
+                        }
+                        
+                        api_param = filter_mapping.get(field, field)
+                        if field == 'status':
+                            params[api_param] = 'on'
+                        else:
+                            params[api_param] = value
             
-            # Use the basic search with enhanced query
-            return await search_legal_cases(
-                query=enhanced_query,
-                search_type=search_type,
-                order_by=order_by,
-                enable_highlighting=enable_highlighting,
-                limit=limit
-            )
+            # Set other parameters
+            if order_by and order_by != "relevance":
+                params['order_by'] = order_by
+            if enable_highlighting:
+                params['highlight'] = 'on'
             
+            logger.info(f"Advanced search with params: {params}")
+            
+            # Make the API request
+            url = f"{courtlistener_ctx.base_url}/search/"
+            response = await courtlistener_ctx.http_client.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+            
+            # Process results
+            results = data.get('results', [])
+            total_count = data.get('count', 0)
+            
+            if not results:
+                return f"No results found for advanced search with query: '{query}'"
+            
+            # Format results based on search type
+            formatted_results = await format_search_results(results, search_type, courtlistener_ctx)
+            
+            # Build response with advanced search details
+            filter_summary = []
+            if courts:
+                filter_summary.append(f"Courts: {', '.join(courts)}")
+            if date_range:
+                filter_summary.append(f"Date Range: {date_range}")
+            if advanced_filters:
+                filter_summary.append(f"Filters: {', '.join(f'{k}={v}' for k, v in advanced_filters.items() if v)}")
+            
+            search_summary = f"""ADVANCED LEGAL SEARCH RESULTS
+    Search Type: {get_search_type_name(search_type)}
+    Query: "{query}"
+    {f"Advanced Filters: {'; '.join(filter_summary)}" if filter_summary else ""}
+    Results: Showing {len(results)} of {total_count:,} total matches
+    Highlighting: {'Enabled' if enable_highlighting else 'Disabled'}
+
+    {formatted_results}
+
+    💡 Advanced search combines multiple filters and court selections
+    🔍 Use multiple courts, date ranges, and status filters for precise results"""
+
+            return search_summary
+            
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 401:
+                return f"Authentication failed. Please check your CourtListener API token."
+            else:
+                logger.error(f"HTTP error in advanced search: {e}")
+                # Include more detailed error information
+                try:
+                    error_detail = e.response.json() if e.response.content else "No error details"
+                except:
+                    error_detail = e.response.text if e.response.content else "No error text"
+                return f"Advanced search error: HTTP {e.response.status_code}\nDetails: {error_detail}"
         except Exception as e:
             logger.error(f"Error in advanced legal search: {e}", exc_info=True)
             return f"Advanced search error: {str(e)}"
-
 
 def get_search_type_name(search_type: str) -> str:
     """Convert search type code to human-readable name."""

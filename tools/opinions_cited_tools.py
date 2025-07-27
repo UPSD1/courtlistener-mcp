@@ -79,7 +79,7 @@ def register_opinions_cited_tools(mcp: FastMCP):
             data = response.json()
             
             citations = data.get('results', [])
-            total_count = data.get('count', 0)
+            total_count = len(citations)
             
             if not citations:
                 return f"❌ No authorities found for opinion {opinion_id}.\n\n💡 This opinion may not cite other cases, or citation data may not be available."
@@ -174,9 +174,8 @@ def register_opinions_cited_tools(mcp: FastMCP):
             response = await courtlistener_ctx.http_client.get(url, params=params)
             response.raise_for_status()
             data = response.json()
-            
             citations = data.get('results', [])
-            total_count = data.get('count', 0)
+            total_count = len(citations)
             
             if not citations:
                 return f"❌ No citing opinions found for opinion {opinion_id}.\n\n💡 This may be a very recent opinion, or it may not have been cited by other cases yet."

@@ -5,6 +5,10 @@ from mcp.client.stdio import stdio_client
 import asyncio
 import json
 from contextlib import AsyncExitStack
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Server parameters for your CourtListener MCP server
 server_params = StdioServerParameters(
@@ -36,8 +40,8 @@ async def connect_to_mcp_server():
 
     # Call a tool
     result = await session.call_tool(
-        "get_opinion", 
-        arguments={"court": "scotus", "limit": 1}
+        "advanced_legal_search", 
+        arguments={"query": "constitutional privacy", "courts": ["scotus", "ca9"], "date_range": "last_year"}
     )
 
     print(result.content[0].text)
