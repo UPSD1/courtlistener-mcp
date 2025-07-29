@@ -74,6 +74,21 @@ class MCPToolConverter:
         # Convert query to parameters based on tool
         params = self._convert_to_params(tool_name, query)
         
+        # Validate parameters are a dictionary
+        if not isinstance(params, dict):
+            logger.error(f"Parameter conversion failed - got {type(params)} instead of dict: {params}")
+            raise ValueError(f"Parameter conversion returned {type(params)} instead of dict")
+        
+        # Additional validation for Brave search
+        if tool_name == 'brave_web_search':
+            if 'query' not in params:
+                raise ValueError("Brave search requires 'query' parameter")
+            if not isinstance(params['query'], str):
+                raise ValueError("Brave search 'query' must be a string")
+            if 'count' in params and not isinstance(params['count'], (int, float)):
+                raise ValueError("Brave search 'count' must be a number")
+        
+        logger.info(f"🔧 Converted '{tool_name}: {query}' to params: {params}")
         return tool_name, params
     
     def _convert_to_params(self, tool_name: str, query: str) -> Dict[str, Any]:
@@ -88,11 +103,18 @@ class MCPToolConverter:
     
     def _add_defaults(self, tool_name: str, params: Dict[str, Any]) -> Dict[str, Any]:
         """Add default parameters"""
-        if 'limit' not in params:
-            params['limit'] = self.default_limits[tool_name]
+        params = params.copy() if isinstance(params, dict) else {}
         
-        if tool_name == 'brave_web_search' and 'count' not in params:
-            params['count'] = self.default_limits[tool_name]
+        # Handle Brave Search specific parameters
+        if tool_name == 'brave_web_search':
+            if 'count' not in params:
+                params['count'] = self.default_limits[tool_name]
+            # Remove 'limit' if it exists since Brave doesn't use it
+            params.pop('limit', None)
+        else:
+            # For other tools, use 'limit'
+            if 'limit' not in params:
+                params['limit'] = self.default_limits[tool_name]
         
         return params
     
@@ -292,13 +314,25 @@ class MCPToolConverter:
         return params
     
     def _convert_brave_search(self, query: str) -> Dict[str, Any]:
+        """Convert brave search query with proper parameter validation"""
+        # Remove quotes if present
+        clean_query = query.strip('"\'')
+        
+        # Basic parameters that work with Brave MCP
         params = {
-            "query": query,
+            "query": clean_query,
             "count": self.default_limits['brave_web_search']
         }
         
+        # Add optional parameters supported by Brave
         if 'recent' in query.lower() or 'latest' in query.lower():
-            params['freshness'] = 'pd'
+            params['freshness'] = 'pd'  # past day
+        
+        # Ensure count is within Brave's limits (1-20)
+        if params['count'] > 20:
+            params['count'] = 20
+        elif params['count'] < 1:
+            params['count'] = 1
         
         return params
     
